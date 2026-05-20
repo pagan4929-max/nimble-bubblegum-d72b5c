@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Market Analyst AI — Rumbo Libre</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{--navy:#0d1b2a;--navy2:#152338;--navy3:#1e3152;--green:#00c896;--green2:#00a07a;--green-dim:rgba(0,200,150,0.12);--red:#ff5c5c;--red-dim:rgba(255,92,92,0.12);--amber:#f5a623;--amber-dim:rgba(245,166,35,0.12);--text:#e8f0fe;--text2:#8fa8c8;--text3:#4a6580;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--radius:10px;--radius-lg:16px;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--navy);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh;}
+.mono{font-family:'DM Mono',monospace;}
+.shell{display:grid;grid-template-columns:290px 1fr;min-height:100vh;}
+.sidebar{background:var(--navy2);border-right:1px solid var(--border);padding:24px 18px;display:flex;flex-direction:column;gap:18px;position:sticky;top:0;height:100vh;overflow-y:auto;}
+.main{padding:28px;overflow:auto;}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo-mark{width:34px;height:34px;background:var(--green);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.logo-mark svg{width:18px;height:18px;fill:var(--navy);}
+.logo-text{font-size:15px;font-weight:700;letter-spacing:-.02em;line-height:1.2;}
+.logo-sub{font-size:10px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;}
+.field-label{font-size:10px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px;}
+.ticker-input{width:100%;padding:10px 12px;background:var(--navy);border:1px solid var(--border2);border-radius:var(--radius);font-family:'DM Mono',monospace;font-size:15px;font-weight:500;color:var(--text);text-transform:uppercase;outline:none;transition:border .15s;letter-spacing:.04em;}
+.ticker-input:focus{border-color:var(--green);}
+.ticker-input::placeholder{text-transform:none;font-size:12px;font-weight:400;color:var(--text3);}
+.pills{display:flex;flex-wrap:wrap;gap:5px;}
+.pill{padding:4px 10px;font-size:11px;font-weight:500;border:1px solid var(--border2);border-radius:20px;color:var(--text2);cursor:pointer;transition:all .15s;background:transparent;}
+.pill:hover{border-color:var(--green);color:var(--green);}
+.pill.active{background:var(--green-dim);border-color:var(--green);color:var(--green);}
+.exc-select{width:100%;padding:8px 10px;background:var(--navy);border:1px solid var(--border2);border-radius:var(--radius);font-size:12px;color:var(--text2);outline:none;cursor:pointer;}
+.lang-row{display:flex;gap:6px;}
+.lang-btn{flex:1;padding:6px;font-size:11px;font-weight:500;border:1px solid var(--border2);border-radius:var(--radius);color:var(--text2);cursor:pointer;background:transparent;transition:all .15s;text-align:center;}
+.lang-btn:hover{border-color:var(--green);color:var(--green);}
+.lang-btn.active{background:var(--green-dim);border-color:var(--green);color:var(--green);}
+.analyze-btn{width:100%;padding:12px;font-size:14px;font-weight:700;font-family:'Syne',sans-serif;background:var(--green);color:var(--navy);border:none;border-radius:var(--radius);cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:8px;}
+.analyze-btn:hover{background:var(--green2);}
+.analyze-btn:disabled{opacity:.5;cursor:not-allowed;}
+.divider{border:none;border-top:1px solid var(--border);}
+.welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;min-height:500px;text-align:center;gap:14px;}
+.welcome-icon{width:64px;height:64px;background:var(--green-dim);border:1px solid rgba(0,200,150,.2);border-radius:16px;display:flex;align-items:center;justify-content:center;}
+.welcome h2{font-size:22px;font-weight:700;}
+.welcome p{font-size:13px;color:var(--text2);max-width:360px;line-height:1.7;}
+.welcome-tickers{font-size:12px;color:var(--text3);font-family:'DM Mono',monospace;}
+.loading-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;min-height:500px;gap:16px;}
+.spinner{width:40px;height:40px;border:2px solid var(--border2);border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-msg{font-size:13px;color:var(--text2);font-family:'DM Mono',monospace;}
+.err-box{background:var(--red-dim);border:1px solid rgba(255,92,92,.3);border-radius:var(--radius);padding:14px;font-size:13px;color:var(--red);line-height:1.6;margin-bottom:16px;}
+.summary-header{background:var(--navy2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;margin-bottom:18px;}
+.summary-ticker{font-size:28px;font-weight:700;letter-spacing:-.02em;font-family:'DM Mono',monospace;}
+.summary-name{font-size:13px;color:var(--text2);margin-top:2px;}
+.summary-resumen{font-size:13px;color:var(--text);line-height:1.6;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
+.status-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:500;}
+.status-pill.bull{background:var(--green-dim);color:var(--green);border:1px solid rgba(0,200,150,.25);}
+.status-pill.bear{background:var(--red-dim);color:var(--red);border:1px solid rgba(255,92,92,.25);}
+.status-pill.neu{background:var(--amber-dim);color:var(--amber);border:1px solid rgba(245,166,35,.25);}
+.dot{width:6px;height:6px;border-radius:50%;background:currentColor;}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px;}
+.metric{background:var(--navy2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;}
+.metric-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;}
+.metric-val{font-size:17px;font-weight:600;font-family:'DM Mono',monospace;}
+.metric-sub{font-size:11px;color:var(--text2);margin-top:2px;}
+.bull{color:var(--green);}.bear{color:var(--red);}.neu{color:var(--amber);}
+.tabs{display:flex;gap:2px;background:var(--navy2);border:1px solid var(--border);border-radius:var(--radius);padding:4px;margin-bottom:18px;}
+.tab{flex:1;padding:7px 6px;font-size:11px;font-weight:600;border:none;background:transparent;color:var(--text2);cursor:pointer;border-radius:7px;transition:all .15s;text-align:center;}
+.tab:hover{color:var(--text);}
+.tab.active{background:var(--navy3);color:var(--green);}
+.panel{display:none;}
+.panel.on{display:block;}
+.tv-frame{width:100%;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.tv-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.tv-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.ai-section{margin-bottom:20px;}
+.ai-section-title{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.sub-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:10px;}
+.mini-card{background:var(--navy2);border:1px solid var(--border);border-radius:var(--radius);padding:10px;}
+.mini-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;}
+.mini-val{font-size:13px;font-weight:500;color:var(--text);line-height:1.5;}
+.prose{font-size:13px;color:var(--text2);line-height:1.7;}
+.signal-main{background:var(--navy2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:12px;}
+.signal-row{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);}
+.signal-row:last-child{border-bottom:none;}
+.sig-badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;font-family:'DM Mono',monospace;}
+.sig-badge.bull{background:var(--green-dim);color:var(--green);border:1px solid rgba(0,200,150,.25);}
+.sig-badge.bear{background:var(--red-dim);color:var(--red);border:1px solid rgba(255,92,92,.25);}
+.sig-badge.neu{background:var(--amber-dim);color:var(--amber);border:1px solid rgba(245,166,35,.25);}
+.disclaimer{font-size:10px;color:var(--text3);line-height:1.5;padding-top:14px;border-top:1px solid var(--border);margin-top:8px;}
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px;}
+@media(max-width:780px){.shell{grid-template-columns:1fr;}.sidebar{position:relative;height:auto;}.metrics{grid-template-columns:repeat(2,1fr);}.tabs{flex-wrap:wrap;}.tab{flex:none;width:calc(33.33% - 2px);}}
+</style>
+</head>
+<body>
+<div class="shell">
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-mark"><svg viewBox="0 0 24 24"><path d="M3 18l4-8 4 4 4-6 4 10H3z"/></svg></div>
+    <div><div class="logo-text">Market Analyst AI</div><div class="logo-sub">Rumbo Libre</div></div>
+  </div>
+  <hr class="divider"/>
+  <div>
+    <div class="field-label">Símbolo / Ticker</div>
+    <input type="text" class="ticker-input" id="ticker" placeholder="Ej: AAPL, BTC, SPY, ES1!..." maxlength="20"/>
+  </div>
+  <div>
+    <div class="field-label">Tipo de activo</div>
+    <div class="pills" id="pills">
+      <button class="pill active" data-t="Acción / Stock">Acción</button>
+      <button class="pill" data-t="ETF">ETF</button>
+      <button class="pill" data-t="Criptomoneda / Crypto">Cripto</button>
+      <button class="pill" data-t="Futuro / Futures">Futuro</button>
+      <button class="pill" data-t="Fondo de Inversión">Fondo</button>
+      <button class="pill" data-t="Opción / Options">Opciones</button>
+    </div>
+  </div>
+  <div>
+    <div class="field-label">Exchange</div>
+    <select class="exc-select" id="exc">
+      <option value="NASDAQ">NASDAQ</option>
+      <option value="NYSE">NYSE</option>
+      <option value="AMEX">AMEX</option>
+      <option value="BINANCE">BINANCE (Cripto)</option>
+      <option value="CME_MINI">CME Mini (Futuros)</option>
+      <option value="CBOE">CBOE (Opciones)</option>
+      <option value="FX">FOREX</option>
+    </select>
+  </div>
+  <div>
+    <div class="field-label">Idioma del análisis</div>
+    <div class="lang-row">
+      <button class="lang-btn active" data-l="es" onclick="setL('es')">Español</button>
+      <button class="lang-btn" data-l="en" onclick="setL('en')">English</button>
+    </div>
+  </div>
+  <button class="analyze-btn" id="abtn" onclick="run()">
+    <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    Analizar
+  </button>
+
+  <hr class="divider"/>
+  <button class="analyze-btn" id="flowBtn" onclick="runFlow()" style="background:var(--navy3);color:var(--green);border:1px solid var(--green);">
+    <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+    Flow Scanner
+  </button>
+  <div class="disclaimer">⚠️ Solo para fines educativos. No constituye asesoramiento financiero ni de inversión. Consulta a un asesor certificado antes de operar.</div>
+</aside>
+
+<main class="main" id="mainArea">
+  <div class="welcome" id="welcome">
+    <div class="welcome-icon"><svg width="30" height="30" fill="none" stroke="#00c896" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+    <h2>Market Analyst AI</h2>
+    <p>Análisis profesional con IA + datos en tiempo real de TradingView. Escribe un ticker y presiona Analizar.</p>
+    <div class="welcome-tickers">AAPL · TSLA · BTC · ETH · SPY · QQQ · ES1! · GLD · EURUSD</div>
+  </div>
+  <div class="loading-screen" id="loadingScreen" style="display:none;">
+    <div class="spinner"></div>
+    <div class="loading-msg" id="lmsg">Consultando mercado...</div>
+  </div>
+  <div id="errArea" style="display:none;"></div>
+  <div id="resultArea" style="display:none;"></div>
+</main>
+</div>
+
+<script>
+let selType='Acción / Stock',selLang='es';
+document.getElementById('pills').addEventListener('click',e=>{
+  const b=e.target.closest('.pill');if(!b)return;
+  document.querySelectorAll('.pill').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');selType=b.dataset.t;
+  const ex=document.getElementById('exc');
+  if(selType.includes('Cripto'))ex.value='BINANCE';
+  else if(selType.includes('Futuro'))ex.value='CME_MINI';
+  else if(selType.includes('Opción'))ex.value='CBOE';
+  else ex.value='NASDAQ';
+});
+document.getElementById('ticker').addEventListener('keydown',e=>{if(e.key==='Enter')run();});
+function setL(l){selLang=l;document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('active',b.dataset.l===l));}
+function showP(i){document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',i===j));document.querySelectorAll('.panel').forEach((p,j)=>p.classList.toggle('on',i===j));}
+function gc(s){if(!s)return'neu';const u=s.toUpperCase();if(u.includes('COMPRA')||u.includes('BUY')||u.includes('ALCISTA')||u.includes('BULLISH'))return'bull';if(u.includes('VENTA')||u.includes('SELL')||u.includes('BAJISTA')||u.includes('BEARISH'))return'bear';return'neu';}
+function buildSym(raw,exc){const t=raw.toUpperCase().trim();if(t.includes(':'))return t;return exc?exc+':'+t:t;}
+function injectIframe(el,src,h){el.innerHTML='';el.style.height=(h||440)+'px';const fr=document.createElement('iframe');fr.src=src;fr.style.cssText='width:100%;height:100%;border:none;display:block;';fr.setAttribute('allowtransparency','true');fr.setAttribute('frameborder','0');fr.setAttribute('scrolling','no');el.appendChild(fr);}
+function loadTV(sym,container){
+  const enc=encodeURIComponent(sym),theme='dark';
+  injectIframe(container.querySelector('#tv0'),`https://www.tradingview.com/widgetembed/?frameElementId=tv0&symbol=${enc}&interval=D&hidesidetoolbar=0&hidetoptoolbar=0&symboledit=0&saveimage=0&studies=RSI%40tv-basicstudies%1FMACD%40tv-basicstudies%1FBB%40tv-basicstudies&theme=${theme}&style=1&timezone=America%2FNew_York&withdateranges=1&locale=es_ES`,460);
+  injectIframe(container.querySelector('#tv1'),`https://www.tradingview.com/widgetembed/?frameElementId=tv1&symbol=${enc}&interval=1D&hidesidetoolbar=1&hidetoptoolbar=1&studies=&theme=${theme}&style=1&timezone=America%2FNew_York&withdateranges=0&locale=es_ES`,430);
+  injectIframe(container.querySelector('#tv2'),`https://www.tradingview.com/widgetembed/?frameElementId=tv2&symbol=${enc}&interval=D&hidesidetoolbar=1&hidetoptoolbar=1&studies=&theme=${theme}&style=3&timezone=America%2FNew_York&withdateranges=0&locale=es_ES`,490);
+  injectIframe(container.querySelector('#tv3'),`https://www.tradingview.com/widgetembed/?frameElementId=tv3&symbol=${enc}&interval=D&hidesidetoolbar=1&hidetoptoolbar=1&studies=&theme=${theme}&style=1&timezone=America%2FNew_York&withdateranges=0&locale=es_ES`,500);
+}
+async function run(){
+  const raw=document.getElementById('ticker').value.trim();
+  const exc=document.getElementById('exc').value;
+  const errArea=document.getElementById('errArea');
+  errArea.style.display='none';
+  if(!raw){document.getElementById('ticker').focus();return;}
+  const tvSym=buildSym(raw,exc);
+  document.getElementById('welcome').style.display='none';
+  document.getElementById('loadingScreen').style.display='flex';
+  document.getElementById('resultArea').style.display='none';
+  document.getElementById('abtn').disabled=true;
+  const msgs=selLang==='es'?['Consultando mercado...','Análisis técnico en curso...','Evaluando fundamentos...','Procesando riesgo...','Preparando señales...']:['Querying market...','Running technical analysis...','Evaluating fundamentals...','Processing risk...','Preparing signals...'];
+  let mi=0;const iv=setInterval(()=>{document.getElementById('lmsg').textContent=msgs[mi++%msgs.length];},2000);
+  let r=null;
+  try{
+    const res=await fetch('/.netlify/functions/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticker:raw.toUpperCase(),assetType:selType,exchange:exc,lang:selLang})});
+    clearInterval(iv);
+    const data=await res.json();
+    if(!res.ok||data.error)throw new Error(data.error||'Error del servidor');
+    r=data.result;
+  }catch(e){
+    clearInterval(iv);
+    document.getElementById('loadingScreen').style.display='none';
+    document.getElementById('abtn').disabled=false;
+    errArea.innerHTML='<div class="err-box"><strong>Error:</strong> '+e.message+'<br><small style="opacity:.7">Ticker: '+raw+' | Revisa la consola (F12) para mas detalles</small></div>';
+    errArea.style.display='block';
+    document.getElementById('welcome').style.display='none';
+    return;
+  }
+  const c=gc(r.senales?.primaria);
+  const riskC=r.riesgo?.nivel?.toUpperCase()==='ALTO'?'bear':r.riesgo?.nivel?.toUpperCase()==='BAJO'?'bull':'neu';
+  const html='<div class="summary-header"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;"><span class="summary-ticker">'+( r.ticker||raw.toUpperCase())+'</span><span class="status-pill '+c+'"><span class="dot"></span>'+(r.senales?.primaria||'—')+'</span><span style="font-size:11px;color:var(--text3);padding:3px 8px;border:1px solid var(--border2);border-radius:20px;">'+(r.tipo||selType)+'</span></div><div class="summary-name">'+(r.nombre||'')+'</div><div class="summary-resumen">'+(r.resumen_ejecutivo||'')+'</div></div><div class="metrics"><div class="metric"><div class="metric-label">Tendencia</div><div class="metric-val '+gc(r.tecnico?.tendencia)+'">'+(r.tecnico?.tendencia||'—')+'</div><div class="metric-sub">'+(r.tecnico?.fuerza_tendencia||'')+'</div></div><div class="metric"><div class="metric-label">Sentimiento</div><div class="metric-val '+gc(r.sentimiento?.mercado)+'">'+(r.sentimiento?.mercado||'—')+'</div></div><div class="metric"><div class="metric-label">Riesgo</div><div class="metric-val '+riskC+'">'+(r.riesgo?.nivel||'—')+'</div><div class="metric-sub">Beta: '+(r.riesgo?.beta||'—')+'</div></div><div class="metric"><div class="metric-label">Precio objetivo</div><div class="metric-val mono" style="font-size:15px;">'+(r.senales?.objetivo_precio||'—')+'</div><div class="metric-sub">'+(r.senales?.timeframe||'')+'</div></div></div><div class="tabs" role="tablist"><button class="tab active" onclick="showP(0)">Grafico</button><button class="tab" onclick="showP(1)">Tecnico TV</button><button class="tab" onclick="showP(2)">Fundamental</button><button class="tab" onclick="showP(3)">Noticias</button><button class="tab" onclick="showP(4)">Analisis IA</button><button class="tab" onclick="showP(5)">Senales</button></div><div class="panel on" id="p0"><div class="tv-label"><span class="tv-dot"></span> Grafico avanzado — TradingView</div><div class="tv-frame" id="tv0"></div></div><div class="panel" id="p1"><div class="tv-label"><span class="tv-dot"></span> Analisis tecnico en tiempo real</div><div class="tv-frame" id="tv1"></div></div><div class="panel" id="p2"><div class="tv-label"><span class="tv-dot"></span> Datos fundamentales</div><div class="tv-frame" id="tv2"></div></div><div class="panel" id="p3"><div class="tv-label"><span class="tv-dot"></span> Noticias</div><div class="tv-frame" id="tv3"></div></div><div class="panel" id="p4"><div class="ai-section"><div class="ai-section-title">Analisis Tecnico IA</div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px;"><div class="mini-card"><div class="mini-label">RSI</div><div class="mini-val">'+(r.tecnico?.indicadores?.rsi||'—')+'</div></div><div class="mini-card"><div class="mini-label">MACD</div><div class="mini-val">'+(r.tecnico?.indicadores?.macd||'—')+'</div></div><div class="mini-card"><div class="mini-label">Medias Moviles</div><div class="mini-val">'+(r.tecnico?.indicadores?.medias_moviles||'—')+'</div></div><div class="mini-card"><div class="mini-label">Volumen</div><div class="mini-val">'+(r.tecnico?.indicadores?.volumen||'—')+'</div></div></div><div class="sub-grid"><div class="mini-card"><div class="mini-label">Soportes</div>'+(r.tecnico?.soportes||[]).map(s=>'<div style="font-size:13px;font-weight:500;color:var(--green);margin-top:3px;">'+s+'</div>').join('')+'</div><div class="mini-card"><div class="mini-label">Resistencias</div>'+(r.tecnico?.resistencias||[]).map(s=>'<div style="font-size:13px;font-weight:500;color:var(--red);margin-top:3px;">'+s+'</div>').join('')+'</div></div><div class="prose">'+(r.tecnico?.analisis_detallado||'')+'</div></div><div class="ai-section"><div class="ai-section-title">Fundamental IA</div><div class="sub-grid"><div class="mini-card"><div class="mini-label">Valoracion</div><div class="mini-val">'+(r.fundamental?.valoracion||'—')+'</div></div><div class="mini-card"><div class="mini-label">Catalizadores</div><div class="mini-val">'+(r.fundamental?.catalistas||'—')+'</div></div></div><div class="mini-card" style="margin-bottom:10px;"><div class="mini-label">Metricas clave</div><div class="mini-val">'+(r.fundamental?.metricas_clave||'—')+'</div></div><div class="prose">'+(r.fundamental?.analisis_detallado||'')+'</div></div><div class="ai-section"><div class="ai-section-title">Sentimiento IA</div><div class="sub-grid"><div class="mini-card"><div class="mini-label">Institucional</div><div class="mini-val">'+(r.sentimiento?.institucional||'—')+'</div></div><div class="mini-card"><div class="mini-label">Minorista</div><div class="mini-val">'+(r.sentimiento?.minorista||'—')+'</div></div></div><div class="mini-card" style="margin-bottom:10px;"><div class="mini-label">Fear and Greed</div><div class="mini-val">'+(r.sentimiento?.fear_greed||'—')+'</div></div><div class="prose">'+(r.sentimiento?.analisis_detallado||'')+'</div></div><div class="ai-section"><div class="ai-section-title">Gestion de Riesgo IA</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px;"><div class="mini-card"><div class="mini-label">Volatilidad</div><div class="mini-val">'+(r.riesgo?.volatilidad||'—')+'</div></div><div class="mini-card"><div class="mini-label">Stop Loss</div><div class="mini-val bear">'+(r.riesgo?.stop_loss_sugerido||'—')+'</div></div><div class="mini-card"><div class="mini-label">Beta</div><div class="mini-val">'+(r.riesgo?.beta||'—')+'</div></div></div><div class="sub-grid"><div class="mini-card"><div class="mini-label">Escenario alcista</div><div class="mini-val">'+(r.riesgo?.escenario_alcista||'—')+'</div></div><div class="mini-card"><div class="mini-label">Escenario bajista</div><div class="mini-val">'+(r.riesgo?.escenario_bajista||'—')+'</div></div></div><div class="prose">'+(r.riesgo?.analisis_detallado||'')+'</div></div></div><div class="panel" id="p5"><div class="signal-main"><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px;"><span class="sig-badge '+c+'" style="font-size:14px;padding:6px 16px;">'+(r.senales?.primaria||'—')+'</span><span style="font-size:12px;color:var(--text2);">Confianza: <strong style="color:var(--text);">'+(r.senales?.confianza||'—')+'</strong></span></div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;"><div class="mini-card"><div class="mini-label">Zona de entrada</div><div class="mini-val mono">'+(r.senales?.zona_entrada||'—')+'</div></div><div class="mini-card"><div class="mini-label">Precio objetivo</div><div class="mini-val mono bull">'+(r.senales?.objetivo_precio||'—')+'</div></div><div class="mini-card"><div class="mini-label">Horizonte temporal</div><div class="mini-val">'+(r.senales?.timeframe||'—')+'</div></div></div><div class="prose">'+(r.senales?.razon||'')+'</div></div>'+(r.senales?.senales_especificas||[]).map(sig=>{const sc=gc(sig.tipo);return'<div class="signal-row"><div style="flex-shrink:0"><span class="sig-badge '+sc+'">'+sig.tipo+'</span></div><div><div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:3px;">'+(sig.descripcion||'')+'</div><div style="font-size:12px;color:var(--text2);">'+(sig.condicion||'')+'</div></div></div>';}).join('')+'</div>';
+  const ra=document.getElementById('resultArea');
+  ra.innerHTML=html;ra.style.display='block';
+  document.getElementById('loadingScreen').style.display='none';
+  document.getElementById('abtn').disabled=false;
+  loadTV(tvSym,ra);showP(0);
+}
+
+async function runFlow(){
+  document.getElementById('welcome').style.display='none';
+  document.getElementById('resultArea').style.display='none';
+  document.getElementById('loadingScreen').style.display='none';
+  document.getElementById('flowArea').style.display='block';
+  document.getElementById('flowLoading').style.display='block';
+  document.getElementById('flowTable').innerHTML='';
+  document.getElementById('flowError').style.display='none';
+  try{
+    const res=await fetch('/.netlify/functions/flow');
+    const data=await res.json();
+    document.getElementById('flowLoading').style.display='none';
+    if(data.error&&(!data.contracts||data.contracts.length===0)){
+      document.getElementById('flowError').innerHTML='<div class="err-box">'+data.error+'</div>';
+      document.getElementById('flowError').style.display='block';
+      return;
+    }
+    const contracts=data.contracts||[];
+    if(contracts.length===0){
+      document.getElementById('flowTable').innerHTML='<div style="text-align:center;padding:2rem;color:var(--text2);font-size:13px;">No se encontraron contratos con esos filtros en este momento.</div>';
+      return;
+    }
+    let rows=contracts.map(c=>{
+      const isPut=c.type==='PUT';
+      const prem=c.premium>=1000000?'<span style="color:var(--green);font-weight:700;">$'+formatNum(c.premium)+'</span>':'$'+formatNum(c.premium);
+      const typeColor=isPut?'var(--red)':'var(--green)';
+      return '<tr style="border-bottom:1px solid var(--border);">'+
+        '<td style="padding:10px 8px;font-weight:600;font-family:DM Mono,monospace;color:var(--text);">'+c.symbol+'</td>'+
+        '<td style="padding:10px 8px;"><span style="color:'+typeColor+';font-weight:600;font-size:11px;padding:2px 7px;border:1px solid '+typeColor+';border-radius:20px;">'+c.type+'</span></td>'+
+        '<td style="padding:10px 8px;font-family:DM Mono,monospace;color:var(--text2);">$'+c.strike+'</td>'+
+        '<td style="padding:10px 8px;font-size:12px;color:var(--text2);">'+c.expiry+'</td>'+
+        '<td style="padding:10px 8px;font-family:DM Mono,monospace;color:var(--text);">'+c.delta.toFixed(2)+'</td>'+
+        '<td style="padding:10px 8px;font-family:DM Mono,monospace;color:var(--text);">'+formatNum(c.volume)+'</td>'+
+        '<td style="padding:10px 8px;font-family:DM Mono,monospace;color:var(--text2);">'+formatNum(c.oi)+'</td>'+
+        '<td style="padding:10px 8px;">'+prem+'</td>'+
+        '<td style="padding:10px 8px;font-size:12px;color:var(--text2);">'+(c.iv*100).toFixed(1)+'%</td>'+
+        '<td style="padding:10px 8px;"><button onclick="document.getElementById('ticker').value=''+c.symbol+'';run();" style="padding:4px 10px;font-size:11px;border:1px solid var(--border2);border-radius:6px;background:transparent;color:var(--text2);cursor:pointer;">Analizar</button></td>'+
+      '</tr>';
+    }).join('');
+    document.getElementById('flowTable').innerHTML=
+      '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;">'+
+      '<thead><tr style="border-bottom:1px solid var(--border2);">'+
+      '<th style="padding:8px;text-align:left;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;">Symbol</th>'+
+      '<th style="padding:8px;text-align:left;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;">Tipo</th>'+
+      '<th style="padding:8px;text-align:left;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;">Strike</th>'+
+      '<th style="padding:8px;text-align:left;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;">Expira</th>'+
+      '<th style="padding:8px;text-align:left;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;">Delta</th>'+
+      '<th style="padding:8px;text-align:left;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;">Volumen</th>'+
+      '<th style="padding:8px;text-align:left;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;">OI</th>'+
+      '<th style="padding:8px;text-align:left;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;">Premium</th>'+
+      '<th style="padding:8px;text-align:left;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;">IV</th>'+
+      '<th style="padding:8px;"></th>'+
+      '</tr></thead><tbody>'+rows+'</tbody></table></div>';
+  }catch(e){
+    document.getElementById('flowLoading').style.display='none';
+    document.getElementById('flowError').innerHTML='<div class="err-box">Error: '+e.message+'</div>';
+    document.getElementById('flowError').style.display='block';
+  }
+}
+function formatNum(n){
+  if(!n) return '0';
+  if(n>=1000000) return (n/1000000).toFixed(1)+'M';
+  if(n>=1000) return (n/1000).toFixed(1)+'K';
+  return n.toString();
+}
+
+</script>
+</body>
+</html>
