@@ -10,7 +10,19 @@ exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
 
   try {
-    const { ticker, assetType, exchange, lang } = JSON.parse(event.body);
+    let body;
+    try {
+      body = JSON.parse(event.body);
+    } catch {
+      return { statusCode: 400, headers, body: JSON.stringify({ error: 'Cuerpo JSON inválido.' }) };
+    }
+
+    const { ticker, assetType, exchange, lang } = body;
+
+    if (!ticker || !assetType || !exchange) {
+      return { statusCode: 400, headers, body: JSON.stringify({ error: 'ticker, assetType y exchange son requeridos.' }) };
+    }
+
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) return {
       statusCode: 500, headers,
@@ -19,10 +31,18 @@ exports.handler = async (event) => {
 
     const es = lang === 'es';
 
-    // Ask for pipe-delimited plain text — NO JSON from the model
+    // Dynamic date reference
+    const now = new Date();
+    const dateRef = now.toLocaleDateString(es ? 'es-ES' : 'en-US', { month: 'long', year: 'numeric' });
+
+    // Sanitize inputs: strip pipe characters that would break parsing, limit length
+    const safeTicker   = String(ticker).replace(/[|]/g, '').trim().slice(0, 20).toUpperCase();
+    const safeAsset    = String(assetType).replace(/[|]/g, '').trim().slice(0, 50);
+    const safeExchange = String(exchange).replace(/[|]/g, '').trim().slice(0, 30);
+
     const system = es
-      ? `Eres un analista financiero experto. Responde UNICAMENTE con una lista de valores separados por el simbolo | en este orden exacto, sin explicaciones, sin JSON, sin markdown, sin saltos de linea extra. Maximo 80 caracteres por campo. Sin comillas.`
-      : `You are an expert financial analyst. Respond ONLY with pipe-separated values in this exact order, no explanations, no JSON, no markdown. Max 80 chars per field. No quotes.`;
+      ? `Eres un analista financiero experto. Responde ÚNICAMENTE con exactamente 35 valores separados por el símbolo |. NUNCA uses | dentro de un valor. Sin explicaciones, sin JSON, sin markdown, sin comillas, sin saltos de línea adicionales. Máximo 100 caracteres por campo. Si no tienes un dato exacto, da una estimación razonada.`
+      : `You are an expert financial analyst. Respond ONLY with exactly 35 pipe-separated values. NEVER use the | character inside a value. No explanations, no JSON, no markdown, no quotes, no extra line breaks. Max 100 chars per field. If exact data is unavailable, provide a reasoned estimate.`;
 
     const fields_es = [
       'tendencia(ALCISTA|BAJISTA|LATERAL)',
@@ -59,19 +79,32 @@ exports.handler = async (event) => {
     const fields = es ? fields_es : fields_en;
 
     const userMsg = es
-      ? `Analiza ${ticker} (${assetType}, ${exchange}, referencia Mayo 2026). Responde con exactamente ${fields.length} valores separados por | en este orden:\n${fields.join(' | ')}`
-      : `Analyze ${ticker} (${assetType}, ${exchange}, reference May 2026). Reply with exactly ${fields.length} pipe-separated values in this order:\n${fields.join(' | ')}`;
+      ? `Analiza ${safeTicker} (${safeAsset}, ${safeExchange}, referencia ${dateRef}). Responde con exactamente ${fields.length} valores separados por | en este orden:\n${fields.join(' | ')}\n\nIMPORTANTE: Exactamente 35 campos separados por |. Sin texto adicional antes ni después.`
+      : `Analyze ${safeTicker} (${safeAsset}, ${safeExchange}, reference ${dateRef}). Reply with exactly ${fields.length} pipe-separated values in this order:\n${fields.join(' | ')}\n\nIMPORTANT: Exactly 35 fields separated by |. No extra text before or after.`;
 
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({
-        model: 'claude-3-5-haiku-20241022',
-        max_tokens: 1500,
-        system,
-        messages: [{ role: 'user', content: userMsg }]
-      })
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 25000);
+
+    let res;
+    try {
+      res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 2500,
+          system,
+          messages: [{ role: 'user', content: userMsg }],
+        }),
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
@@ -79,17 +112,21 @@ exports.handler = async (event) => {
     }
 
     const data = await res.json();
-    const txt = (data.content?.find(b => b.type === 'text')?.text || '').trim();
+    let txt = (data.content?.find(b => b.type === 'text')?.text || '').trim();
 
-    // Parse pipe-delimited response — no JSON parsing needed
-    const parts = txt.split('|').map(v => v.trim().replace(/\n/g,' ').replace(/\r/g,'').slice(0,120));
+    // Strip markdown code fences the model might add despite instructions
+    txt = txt.replace(/^```[^\n]*\n?/, '').replace(/\n?```$/, '').trim();
+    // Collapse all line breaks into spaces so the split works correctly
+    txt = txt.replace(/\r?\n/g, ' ');
 
-    const g = (i, fallback='—') => parts[i] || fallback;
+    const parts = txt.split('|').map(v => v.trim().slice(0, 120));
+
+    const g = (i, fallback = '—') => (parts[i] && parts[i].trim()) ? parts[i].trim() : fallback;
 
     const result = {
-      ticker: ticker.toUpperCase(),
-      nombre: ticker.toUpperCase(),
-      tipo: assetType,
+      ticker: safeTicker,
+      nombre: safeTicker,
+      tipo: safeAsset,
       resumen_ejecutivo: g(11),
       tecnico: {
         tendencia: g(0), fuerza_tendencia: g(1),
@@ -113,6 +150,9 @@ exports.handler = async (event) => {
     return { statusCode: 200, headers, body: JSON.stringify({ result }) };
 
   } catch (e) {
+    if (e.name === 'AbortError') {
+      return { statusCode: 504, headers, body: JSON.stringify({ error: 'La solicitud tardó demasiado. Por favor intenta de nuevo.' }) };
+    }
     return { statusCode: 500, headers, body: JSON.stringify({ error: e.message }) };
   }
 };
