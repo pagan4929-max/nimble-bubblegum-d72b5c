@@ -261,13 +261,15 @@ async function runFlow(){
         '<td style="padding:10px 8px;font-family:DM Mono,monospace;color:var(--text);">'+c.delta.toFixed(2)+'</td>'+
         '<td style="padding:10px 8px;font-family:DM Mono,monospace;color:var(--text);">'+formatNum(c.volume)+'</td>'+
         '<td style="padding:10px 8px;font-family:DM Mono,monospace;color:var(--text2);">'+formatNum(c.oi)+'</td>'+
+        '<td style="padding:10px 8px;font-family:DM Mono,monospace;color:'+(c.voi>=1?'var(--green)':c.voi>=0.3?'#f59e0b':'var(--text2)')+';">'+(c.voi||0).toFixed(2)+'x</td>'+
         '<td style="padding:10px 8px;">'+prem+'</td>'+
         '<td style="padding:10px 8px;font-size:12px;color:var(--text2);">'+(c.iv*100).toFixed(1)+'%</td>'+
         '<td style="padding:10px 8px;"><button onclick="document.getElementById(\'ticker\').value=\''+c.symbol+'\';run();" style="padding:4px 10px;font-size:11px;border:1px solid var(--border2);border-radius:6px;background:transparent;color:var(--text2);cursor:pointer;">Analizar</button></td>'+
       '</tr>';
     }).join('');
+    const metaHtml=data.meta?'<div style="padding:0 0 14px;font-size:12px;color:var(--text3);">Escaneados: <b style="color:var(--text2);">'+data.meta.scanned+'</b> símbolos · Expiraciones: <b style="color:var(--text2);">'+(data.meta.expirations||[]).join(' y ')+'</b> · <b style="color:var(--text2);">'+data.meta.total+'</b> contratos encontrados</div>':'';
     document.getElementById('flowTable').innerHTML=
-      '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;">'+
+      metaHtml+'<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;">'+
       '<thead><tr style="border-bottom:1px solid var(--border2);">'+
       '<th style="padding:8px;text-align:left;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;">Symbol</th>'+
       '<th style="padding:8px;text-align:left;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;">Tipo</th>'+
@@ -276,6 +278,7 @@ async function runFlow(){
       '<th style="padding:8px;text-align:left;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;">Delta</th>'+
       '<th style="padding:8px;text-align:left;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;">Volumen</th>'+
       '<th style="padding:8px;text-align:left;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;">OI</th>'+
+      '<th style="padding:8px;text-align:left;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;">V/OI</th>'+
       '<th style="padding:8px;text-align:left;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;">Premium</th>'+
       '<th style="padding:8px;text-align:left;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;">IV</th>'+
       '<th style="padding:8px;"></th>'+
