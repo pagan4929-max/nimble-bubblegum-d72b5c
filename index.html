@@ -263,7 +263,7 @@ async function runFlow(){
         '<td style="padding:10px 8px;font-family:DM Mono,monospace;color:var(--text2);">'+formatNum(c.oi)+'</td>'+
         '<td style="padding:10px 8px;">'+prem+'</td>'+
         '<td style="padding:10px 8px;font-size:12px;color:var(--text2);">'+(c.iv*100).toFixed(1)+'%</td>'+
-        '<td style="padding:10px 8px;"><button onclick="document.getElementById('ticker').value=''+c.symbol+'';run();" style="padding:4px 10px;font-size:11px;border:1px solid var(--border2);border-radius:6px;background:transparent;color:var(--text2);cursor:pointer;">Analizar</button></td>'+
+        '<td style="padding:10px 8px;"><button onclick="document.getElementById(\'ticker\').value=\''+c.symbol+'\';run();" style="padding:4px 10px;font-size:11px;border:1px solid var(--border2);border-radius:6px;background:transparent;color:var(--text2);cursor:pointer;">Analizar</button></td>'+
       '</tr>';
     }).join('');
     document.getElementById('flowTable').innerHTML=
