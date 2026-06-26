@@ -255,8 +255,10 @@ async function runFlow(){
       return;
     }
     const contracts=data.contracts||[];
+    const errNote=data.meta?.errors?.length?'<div style="padding:6px 0 14px;font-size:11px;color:#f59e0b;">⚠ Errores en '+data.meta.errors.length+' símbolo(s): '+data.meta.errors.join(', ')+'</div>':'';
     if(contracts.length===0){
-      document.getElementById('flowTable').innerHTML='<div style="text-align:center;padding:2rem;color:var(--text2);font-size:13px;">No se encontraron contratos con esos filtros en este momento.</div>';
+      const errDetail=data.meta?.errors?.length?' · Errores API: '+data.meta.errors.join(', '):'';
+      document.getElementById('flowTable').innerHTML=metaHtml+'<div style="text-align:center;padding:2rem;color:var(--text2);font-size:13px;">No se encontraron contratos con actividad suficiente en las próximas expiraciones.'+errDetail+'</div>';
       return;
     }
     let rows=contracts.map(c=>{
@@ -277,7 +279,7 @@ async function runFlow(){
         '<td style="padding:10px 8px;"><button onclick="document.getElementById(\'ticker\').value=\''+c.symbol+'\';run();" style="padding:4px 10px;font-size:11px;border:1px solid var(--border2);border-radius:6px;background:transparent;color:var(--text2);cursor:pointer;">Analizar</button></td>'+
       '</tr>';
     }).join('');
-    const metaHtml=data.meta?'<div style="padding:0 0 14px;font-size:12px;color:var(--text3);">Escaneados: <b style="color:var(--text2);">'+data.meta.scanned+'</b> símbolos · Expiraciones: <b style="color:var(--text2);">'+(data.meta.expirations||[]).join(' y ')+'</b> · <b style="color:var(--text2);">'+data.meta.total+'</b> contratos encontrados</div>':'';
+    const metaHtml=(data.meta?'<div style="padding:0 0 14px;font-size:12px;color:var(--text3);">Escaneados: <b style="color:var(--text2);">'+data.meta.scanned+'</b> símbolos · Expiraciones: <b style="color:var(--text2);">'+(data.meta.expirations||[]).join(' y ')+'</b> · <b style="color:var(--text2);">'+data.meta.total+'</b> contratos encontrados</div>':'')+errNote;
     document.getElementById('flowTable').innerHTML=
       metaHtml+'<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;">'+
       '<thead><tr style="border-bottom:1px solid var(--border2);">'+
