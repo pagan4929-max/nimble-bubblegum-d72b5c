@@ -72,8 +72,7 @@ exports.handler = async (event) => {
         const premium = Math.round(px * vol * 100);
         const voi = oi > 0 ? Math.round((vol / oi) * 100) / 100 : 0;
 
-        if (vol < 100 || premium < 10000) return null;
-        if (vol < 500 && voi < 0.25 && premium < 100000) return null;
+        if (vol < 10 || premium < 500) return null;
 
         return {
           symbol: sym,
@@ -124,7 +123,7 @@ exports.handler = async (event) => {
     return {
       statusCode: 200, headers,
       body: JSON.stringify({
-        contracts: unique.slice(0, 60),
+        contracts: unique.slice(0, 100),
         meta: {
           scanned: watchlist.length,
           total: unique.length,
